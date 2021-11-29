@@ -1,0 +1,225 @@
+namespace игра_пятнашки
+{
+    public partial class Form1 : Form
+    {
+        public Form1()
+        {
+            InitializeComponent();
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            Pyatnashki gm = new Pyatnashki();
+            this.Hide();
+            gm.Show();
+        }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+            this.Close();
+        }
+    }
+    public class Pyatnashki : Form
+    {
+        const int Vershin = 4;
+        const int VoidKletka = Vershin * Vershin;//пустая клетка
+        int voidX = Vershin - 1, voidY = Vershin - 1;//координаты пустой клетки
+        Button[,] MassiveButton;//массив кнопок
+        Button cancel;//кнопка отмены
+        int[,] MassiveNumber;//массив, который хранит цифры на кнопках
+        Random rand = new Random();
+        
+        public Pyatnashki()
+        {
+            Text = "Пятнашки";
+            FormBorderStyle = FormBorderStyle.Fixed3D;
+            MaximizeBox = false;//нельзя увеличить окно
+            ClientSize = new Size(Vershin * 70-20, Vershin * 70 +10);
+            BackColor = Color.White;
+            MassiveButton = new Button[Vershin, Vershin];
+            MassiveNumber = new int[Vershin, Vershin];
+
+            cancel = new Button();
+            cancel.Parent = this;
+            cancel.Text = "Отмена";
+            cancel.Left = 10;
+            cancel.Top = Vershin * 70 - 40;
+            cancel.Height = 40;
+            cancel.Width = Vershin * 70 - 40;
+            cancel.Font = new Font("Century", 12, FontStyle.Bold);
+            cancel.Click += new EventHandler(OnMenuExit);
+            cancel.ForeColor = Color.Red;
+            cancel.BackColor = Color.MintCream;
+
+            int i, j;
+            for (i = 0; i < Vershin; i++)
+            {
+                for (j = 0; j < Vershin; j++)
+                {
+                    MassiveButton[i, j] = new Button();
+                    MassiveButton[i, j].Parent = this;
+                    MassiveNumber[i, j] = i * Vershin + j + 1;
+                    if (MassiveNumber[i, j] != VoidKletka)
+                        MassiveButton[i, j].Text = Convert.ToString(MassiveNumber[i, j]);
+                    
+                    MassiveButton[i, j].Left = 30 + j * 50;
+                    MassiveButton[i, j].Top = 10 + i * 50;
+                    MassiveButton[i, j].Width = 60;
+                    MassiveButton[i, j].Height = 60;
+                    MassiveButton[i, j].Font = new Font("Century", 12, FontStyle.Bold);
+                    MassiveButton[i, j].Tag = new Point(i, j);
+                    MassiveButton[i, j].Click += new EventHandler(ClickButtonOrShag);
+                    MassiveButton[i, j].ForeColor = Color.Black;
+                    MassiveButton[i, j].BackColor = Color.MintCream;
+                }
+            }
+            CenterToScreen();//показываем форму;
+            Start();
+        }
+        void OnMenuExit(object obj, EventArgs ea)
+        {
+            Form1 f1 = new Form1();
+            this.Hide();
+            f1.Show();
+
+        }
+
+        void Start() //перемешиваем поле
+        {
+            int i, j, k;
+            int naprav;
+            int Times = Vershin * 100;
+            for (k = 0; k < Times; k++)
+            {
+                naprav = rand.Next(4);
+                if (naprav == 0) // Вверх
+                {
+                    if (voidX - 1 >= 0)
+                    {
+                        MassiveNumber[voidX, voidY] = MassiveNumber[voidX - 1, voidY];
+                        voidX--;
+                    }
+                    else
+                    {
+                        for (i = 0; i < Vershin - 1; i++)
+                        {
+                            MassiveNumber[i, voidY] = MassiveNumber[i + 1, voidY];
+                        }
+                        voidX = Vershin - 1;
+                    }
+                }
+                else if (naprav == 1)
+                {
+                    if (voidX + 1 < Vershin)
+                    {
+                        MassiveNumber[voidX, voidY] = MassiveNumber[voidX + 1, voidY];
+                        voidX++;
+                    }
+                    else
+                    {
+                        for (i = Vershin - 1; i > 0; i--)
+                        {
+                            MassiveNumber[i, voidY] = MassiveNumber[i - 1, voidY];
+                        }
+                        voidX = 0;
+                    }
+                }
+                else if (naprav == 2) // Влево
+                {
+                    if (voidY - 1 >= 0)
+                    {
+                        MassiveNumber[voidX, voidY] = MassiveNumber[voidX, voidY - 1];
+                        voidY--;
+                    }
+                    else
+                    {
+                        for (j = 0; j < Vershin - 1; j++)
+                        {
+                            MassiveNumber[voidX, j] = MassiveNumber[voidX, j + 1];
+                        }
+                        voidY = Vershin - 1;
+                    }
+                }
+                else // Вправо
+                {
+                    if (voidY + 1 < Vershin)
+                    {
+                        MassiveNumber[voidX, voidY] = MassiveNumber[voidX, voidY + 1];
+                        voidY++;
+                    }
+                    else
+                    {
+                        for (j = Vershin - 1; j > 0; j--)
+                        {
+                            MassiveNumber[voidX, j] = MassiveNumber[voidX, j - 1];
+                        }
+                        voidY = 0;
+                    }
+                }
+                
+                MassiveNumber[voidX, voidY] = VoidKletka;
+            }
+            
+            for (i = 0; i < Vershin; i++)
+            {
+                for (j = 0; j < Vershin; j++)
+                {
+                    if (MassiveNumber[i, j] != VoidKletka)
+                    {
+                        MassiveButton[i, j].Text = Convert.ToString(MassiveNumber[i, j]);
+                    }
+                    else
+                    {
+                        MassiveButton[i, j].Text = "";
+                    }
+                }
+            }
+
+        }
+        bool WIN()
+        {
+            int i, j, k = 1;
+            for (i = 0; i < Vershin; i++)
+            {
+                for (j = 0; j < Vershin; j++)
+                {
+                    if (MassiveNumber[i, j] != k)
+                        return false;
+                    k++;
+                }
+            }
+            return true;
+        }
+
+        void ClickButtonOrShag(object obj, EventArgs ea)
+        {
+            Button btn = (Button)obj;
+
+            int i = ((Point)btn.Tag).X;
+            int j = ((Point)btn.Tag).Y;
+
+            if (Math.Abs(i - voidX) + Math.Abs(j - voidY) == 1)
+            {
+                MassiveNumber[voidX, voidY] = MassiveNumber[i, j];
+                MassiveButton[voidX, voidY].Text = MassiveButton[i, j].Text;
+                voidX = i;
+                voidY = j;
+                MassiveNumber[voidX, voidY] = VoidKletka;
+                MassiveButton[voidX, voidY].Text = "";
+            }
+            if (voidX == Vershin - 1 && voidY == Vershin - 1)
+            {
+                if (WIN() == true)
+                {
+
+                    string msg = "Поздравляем! Игра пройдена!";
+                    MessageBox.Show(msg, "Победа!", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                    Form1 f1 = new Form1();
+                    this.Hide();
+                    f1.Show();
+                }
+            }
+        }
+        
+    }
+}

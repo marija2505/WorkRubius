@@ -1,0 +1,581 @@
+class Program
+    {
+        static public void ReplaceCharInString(ref String str, int index, Char newSymb)
+        {
+            str = str.Remove(index, 1).Insert(index, newSymb.ToString());
+        }
+        static int MaxZagProc(int[] proces, int n, int[,] time, int m)
+        {
+            int[] proc = new int[n];
+            for (int j = 0; j < n; j++)
+            {
+                proc[j] = 0;
+            }
+           // Console.WriteLine("");
+            for (int j = 0; j < m; j++)
+{
+                proc[proces[j]] += time[proces[j],j];
+            }
+            int max = proc[0];
+            for (int i = 1; i < n; i++)
+            {
+                if (max < proc[i])
+                {
+                    max = proc[i];
+                }
+            }
+            return max;
+        }
+        static string convToSis(int sis, int v)
+        {
+            int j = 0;
+            string s = "";
+            while (v >= sis)
+            {
+                s += v % sis;
+                v = v / sis;
+            }
+            s += v % sis;
+            return s;
+        }
+        static int[,] Mytacia(int[,] a, int m, int Mut, int n, int[] inte)
+        {
+            int[,] aa = new int[2, m];
+            Random rand = new Random();
+            string s1 = "";
+            int schet = 0;
+            for (int j = 0; j < m; j++)
+            {
+                string s = convToSis(2, a[0, j]);
+                for (int k = 7; k >= 0; k--)
+                {
+                    if ((s.Length + schet) < 8)
+                    {
+                        s1 += '0';
+                        schet++;
+                        continue;
+                    }
+                    else
+                        s1 += s[k];
+                }
+                s = "";
+                schet = 0;
+            }
+            int mytchis = rand.Next(0, m * 8),mytchis2=mytchis;
+            while(mytchis2==mytchis)
+            {
+                mytchis2 = rand.Next(0, m * 8);
+            }
+            //Console.WriteLine("s[{0}]={1}", mytchis, s1[mytchis]);
+            if (s1[mytchis] == '0')
+            {
+                ReplaceCharInString(ref s1, mytchis, '1');
+            }
+            else if (s1[mytchis] == '1')
+            {
+                ReplaceCharInString(ref s1, mytchis, '0');
+            }
+           // Console.WriteLine("s[{0}]={1}", mytchis, s1[mytchis]);
+            if (s1[mytchis2] == '0')
+            {
+                ReplaceCharInString(ref s1, mytchis2, '1');
+            }
+            else if (s1[mytchis2] == '1')
+            {
+                ReplaceCharInString(ref s1, mytchis2, '0');
+            }
+            //Console.WriteLine("s[{0}]={1}", mytchis2, s1[mytchis2]);
+            int sum = 0, shet = 0, l = 0, prol = 0, stepen = 7, index = 0;
+            string proverka = "";
+            for (int j = 0; j < s1.Length; j++)
+            {
+                if (s1[j] == '1')
+                {
+                    sum += (int)Math.Pow(2, stepen);
+                }
+                proverka += s1[j];
+                stepen--;
+                if (shet == 7)
+                {
+                    aa[0, index] = sum;
+                    for (int ob = 0; ob < n; ob++)
+                    {
+                        if (sum < inte[ob])
+                        {
+                            prol = ob;
+                            break;
+                        }
+                    }
+                    aa[1, index] = prol;
+                    sum = 0;
+                    shet = 0;
+                    stepen = 7;
+                    l++;
+                    proverka = "";
+                    index++;
+                    continue;
+                }
+
+                shet++;
+            }
+            Console.WriteLine("");
+            return aa;
+        }
+        static int[,] Crossover(int[,] part, int m, int[,] t, int n, int Mut, int[] inte)
+        {
+            //Console.WriteLine("==========Crossover for potomoc=============");
+            int[,] pred = new int[2, m];
+            int[,] lastprov = new int[2, m];
+            Random rand = new Random();
+            int pozCros = rand.Next(0, m), tmp1 = 0, tmp2 = 0,pozCros1=pozCros;
+            while(pozCros1==pozCros || (pozCros1-pozCros)==1 || (pozCros - pozCros1) == 1)
+            {
+                pozCros1 = rand.Next(0, m);
+            }
+            int[,] pol = new int[2, m], itog = new int[2, m], itog1 = new int[2, m];
+            int[] p1 = new int[m], p2 = new int[m];
+            for (int i = 0; i < m; i++)
+            {
+                pred[0, i] = part[0, i];
+                pred[1, i] = part[2, i];
+            }
+            int minpoz, maxpoz;
+            if(pozCros<pozCros1)
+            {
+                minpoz = pozCros;
+                maxpoz = pozCros1;
+            }
+            else
+            {
+                minpoz = pozCros1;
+                maxpoz = pozCros;
+            }
+            for (int i = minpoz; i < maxpoz; i++)
+            {
+                tmp1 = part[0, i];
+                tmp2 = part[2, i];
+                part[0, i] = part[1, i];
+                part[2, i] = part[3, i];
+                part[1, i] = tmp1;
+                part[3, i] = tmp2;
+            }
+            Console.WriteLine("Potomok 1: ");
+            Console.Write("Gen :");
+            for (int i = 0; i < m; i++)
+            {
+                p1[i] = part[2, i];
+                p2[i] = part[3, i];
+                pol[0, i] = part[2, i];
+                pol[1, i] = part[3, i];
+                itog[0, i] = part[0, i];
+                itog[1, i] = part[2, i];
+                itog1[0, i] = part[1, i];
+                itog1[1, i] = part[3, i];
+                Console.Write(" {0} ", part[0, i]);
+            }
+            Console.WriteLine("");
+            Console.Write("Prc :");
+            for (int i = 0; i < m; i++)
+            {
+                Console.Write("  {0}  ", part[2, i]);
+            }
+            Console.WriteLine("");
+            Console.WriteLine("Potomok 2 :");
+            Console.Write("Gen :");
+            for (int i = 0; i < m; i++)
+            {
+                Console.Write(" {0} ", part[1, i]);
+            }
+            Console.WriteLine("");
+            Console.Write("Prc :");
+            for (int i = 0; i < m; i++)
+            {
+                Console.Write("  {0}  ", part[3, i]);
+            }
+            Console.WriteLine("");
+            int VerMyt = rand.Next(0, 100);
+            if (VerMyt < Mut)
+            {
+                int[,] aa1 = Mytacia(itog, m, Mut, n, inte);
+                int[,] aa2 = Mytacia(itog1, m, Mut, n, inte);
+                for (int i = 0; i < m; i++)
+                {
+                    itog[0, i] = aa1[0, i];
+                    itog[1, i] = aa1[1, i];
+                    itog1[0, i] = aa2[0, i];
+                    itog1[1, i] = aa2[1, i];
+                    pol[0, i] = itog[1, i];
+                    pol[1, i] = itog1[1, i];
+                }
+                Console.WriteLine("Potomok 1 Posle mytacii: ");
+                Console.Write("Gen :");
+                for (int i = 0; i < m; i++)
+                {
+                    Console.Write(" {0} ", aa1[0, i]);
+                }
+                Console.WriteLine("");
+                Console.Write("Prc :");
+                for (int i = 0; i < m; i++)
+                {
+                    Console.Write("  {0}  ", aa1[1, i]);
+                }
+                Console.WriteLine("");
+                Console.WriteLine("Potomok 2 Posle mytacii:");
+                Console.Write("Gen :");
+                for (int i = 0; i < m; i++)
+                {
+                    Console.Write(" {0} ", aa2[0, i]);
+                }
+                Console.WriteLine("");
+                Console.Write("Prc :");
+                for (int i = 0; i < m; i++)
+                {
+                    Console.Write("  {0}  ", aa2[1, i]);
+                }
+                Console.WriteLine("");
+            }
+            Console.WriteLine("Process for 2 potomokov: ");
+            int minmax = PoisminmaxPoOsobi(pol, t, n, 2, m);
+            int bul = MaxZagProc(p1, n, t, m);
+            if (bul == minmax)
+            {
+                Console.WriteLine("Potomok 1 is better!");
+                return itog;
+            }
+            else
+            {
+                Console.WriteLine("Potomok 2 is better!");
+                return itog1;
+            }
+
+        }
+        static int MaxPr(int[] proc, int n)
+        {
+            int max = proc[0];
+            for (int i = 0; i < n; i++)
+            {
+                if (max < proc[i])
+                {
+                    max = proc[i];
+                }
+            }
+            return max;
+        }
+        static int MinMax(int[] proc, int n)
+        {
+            int min = proc[0];
+            for (int i = 0; i < n; i++)
+            {
+                if (min > proc[i])
+                {
+                    min = proc[i];
+                }
+            }
+            return min;
+        }
+        static int MinProcIndex(int [] proc, int p)
+        {
+            int min = proc[0],index=0;
+            for(int i = 0; i < p; i++)
+            {
+                if (min > proc[i])
+                {
+                    min = proc[i];
+                    index = i;
+                }
+            }
+            return index;
+        }
+        static int PoisminmaxPoOsobi(int[,] pop, int[,] t, int n, int p, int m)
+        {
+            int[,] proc = new int[p, n];
+            for (int i = 0; i < p; i++)
+            {
+                for (int j = 0; j < n; j++)
+                {
+                    proc[i, j] = 0;
+                }
+            }
+            //Console.WriteLine("Process IN Osob:");
+            Console.WriteLine("");
+            for (int i = 0; i < p; i++)
+            {
+                for (int j = 0; j < m; j++)
+                {
+                    proc[i, pop[i, j]] += t[pop[i,j],j];
+                }
+            }
+            int[] maxproc = new int[p];
+            for (int i = 0; i < p; i++)
+            {
+                Console.WriteLine("Osob {0}", i);
+                int[] po = new int[n];
+                for (int j = 0; j < n; j++)
+                {
+                    Console.Write("Proc {0}", j);
+                    Console.WriteLine("= {0};", proc[i, j]);
+                    po[j] = proc[i, j];
+                }
+                maxproc[i] = MaxPr(po, n);
+                Console.WriteLine("Max proc from osob{0}: {1};", i, maxproc[i]);
+                Console.WriteLine("");
+            }
+            return MinMax(maxproc, p);
+        }
+        static int PoisminmaxPoOsobi1(int[,] pop, int[,] t, int n, int p, int m)
+        {
+            int[,] proc = new int[p, n];
+            for (int i = 0; i < p; i++)
+            {
+                for (int j = 0; j < n; j++)
+                {
+                    proc[i, j] = 0;
+                }
+            }
+            for (int i = 0; i < p; i++)
+            {
+                for (int j = 0; j < m; j++)
+                {
+                    proc[i, pop[i, j]] += t[pop[i, j], j];
+                }
+            }
+            int[] maxproc = new int[p];
+            for (int i = 0; i < p; i++)
+            {
+                int[] po = new int[n];
+                for (int j = 0; j < n; j++)
+                {
+                    po[j] = proc[i, j];
+                }
+                maxproc[i] = MaxPr(po, n);
+            }
+            return MinMax(maxproc, p);
+        }
+        static int [] OtborPopylForNewPokolenie(int [,] popyl, int n, int m, int p, int[,] time, int [,] gen)
+        {
+
+            Console.WriteLine("Otbor osobei for new pokolenie");
+            for (int i = 0; i < 2*p; i++)
+            {
+                Console.WriteLine("Osob {0}", i);
+                Console.Write("Gen: ");
+                for (int j = 0; j < m; j++)
+                {
+                    Console.Write(" {0} ", gen[i, j]);
+                }
+                Console.WriteLine("");
+                Console.Write("Prc: ");
+                for (int j = 0; j < m; j++)
+                {
+                    Console.Write("  {0}  ", popyl[i, j]);
+                }
+                Console.WriteLine();
+            }
+            int[] itogosob=new int[p];
+            for(int i=0;i<p;i++)
+            {
+                itogosob[i] = 100;
+            }
+            int index = 0,schet=0;
+            bool prov = true;
+            int minmax = PoisminmaxPoOsobi(popyl, time, n, 2 * p, m);
+            Console.Write("Max zagrujenie processori B ly4shih osobyah: {0}, ",minmax);
+            int[] maxzagproc = new int[2 * p];
+                int[] po = new int[m];
+                schet = 0;
+                for(int k=0;k<(2*p);k++)
+                {
+                    for(int j=0;j<m;j++)
+                    {
+                        po[j] = popyl[k, j];
+                    }
+                int a = MaxZagProc(po, n, time, m);
+                    maxzagproc[k] = a;
+                }
+            for (int i = 0; i < p; i++)
+            {
+                int min = MinProcIndex(maxzagproc, 2 * p);
+                itogosob[i] = min;
+                maxzagproc[min] = 10000;
+            }
+            //if (index == (p - 1)) break;
+            //Console.Write("{0},",minmax);
+            Console.WriteLine("");
+            Console.WriteLine("B novoe pokolenie voidyt:");
+            for(int i=0;i<p;i++)
+            {
+                Console.Write("Osob {0}", itogosob[i]);
+                if(i!=p-1)
+                {
+                    Console.Write(",");
+                }
+            }
+            return itogosob;
+        }
+        static void Main(string[] args)
+        {
+            int m, n, t1, t2, p, Cr, Mut, R, interval = 0, proc = 0, MiniMAksi = 0, povtor = 0;
+            Console.WriteLine("Vvedite kolvo processorov (n): ");
+            n = Int32.Parse(Console.ReadLine());
+            Console.WriteLine("Vvedite kolvo zadach (m): ");
+            m = Int32.Parse(Console.ReadLine());
+            Console.WriteLine("Vvedite niz predel (t1): ");
+            t1 = Int32.Parse(Console.ReadLine());
+            Console.WriteLine("Vvedite verx predel (t2): ");
+            t2 = Int32.Parse(Console.ReadLine());
+            Console.WriteLine("Vvedite kolvo popylyac (p): ");
+            p = Int32.Parse(Console.ReadLine());
+            Console.WriteLine("Vvedite veroyatnost krossovera (Cr): ");
+            Cr = Int32.Parse(Console.ReadLine());
+            Console.WriteLine("Vvedite veroyatnost mytac (Mut) : ");
+            Mut = Int32.Parse(Console.ReadLine());
+            Console.WriteLine("Vvedite kolvo povtorov (R): ");
+            R = Int32.Parse(Console.ReadLine());
+            Random rand = new Random();
+            interval = 255 / n;
+            int[] inte = new int[n];
+            inte[0] = interval + 1;
+            Console.WriteLine("Interaval: ");
+            Console.Write("0-{0} ", inte[0] - 1);
+            for (int i = 1; i < n; i++)
+            {
+                Console.Write("{0}-", inte[i - 1]);
+                inte[i] = inte[i - 1] + interval + 1;
+                Console.Write("{0} ", inte[i] - 1);
+            }
+            Console.WriteLine();
+
+            int[,] Time = new int[n, m];
+            for (int j = 0; j < n; j++)
+            {
+                for (int i = 0; i < m; i++)
+                {
+                    Time[j, i] = rand.Next(t1, t2);
+                }
+            }
+            int[,] popyl = new int[p, m], Gen = new int[p, m];
+            for (int i = 0; i < p; i++)
+            {
+
+                for (int j = 0; j < m; j++)
+                {
+                    Gen[i, j] = rand.Next(0, 255);
+                    for (int k = 0; k < n; k++)
+                    {
+                        if (Gen[i, j] < inte[k])
+                        {
+                            proc = k;
+                            break;
+                        }
+                    }
+                    popyl[i, j] = proc;
+                }
+            }
+            while (povtor < R)
+            {
+                
+                Console.WriteLine("Ves zdach: ");
+                Console.Write("    ");
+                for (int i = 0; i < m; i++)
+                {
+                    Console.Write("  {0} ", i);
+                }
+                Console.WriteLine("");
+                Console.WriteLine("-------------------------");
+                for (int j = 0; j < n; j++)
+                {
+                    Console.Write("Pr{0} |", j);
+                    for (int i = 0; i < m; i++)
+                    {
+                        Console.Write(" {0} ", Time[j, i]);
+                    }
+                    Console.WriteLine();
+                }
+                Console.WriteLine("");
+                int VerCros;
+                int[,] part = new int[4, m];
+                int[,] itogCr, ItogCros = new int[p + p, m], ProcPopyl = new int[p + p, m], ItogCros1 = new int[p, m], PP = new int[p, m];
+                for (int i = 0; i < p; i++)
+                {
+                    Console.WriteLine("Osob {0}", i);
+                    for (int j = 0; j < m; j++)
+                    {
+                        ItogCros[i, j] = Gen[i, j];
+                        ProcPopyl[i, j] = popyl[i, j];
+                    }
+                    Console.Write("Gen: ");
+                    for (int j = 0; j < m; j++)
+                    {
+                        Console.Write(" {0} ", Gen[i, j]);
+                    }
+                    Console.WriteLine("");
+                    Console.Write("Prc: ");
+                    for (int j = 0; j < m; j++)
+                    {
+                        Console.Write("  {0}  ", popyl[i, j]);
+                    }
+                    Console.WriteLine();
+                }
+                int minmax = PoisminmaxPoOsobi(popyl, Time, n, p, m);
+                if (MiniMAksi == minmax)
+                {
+                    povtor++;
+                }
+                MiniMAksi = minmax;
+                Console.WriteLine("MinMax proc from all osob: {0}", minmax);
+                for (int i = 0; i < p; i++)
+                {
+                    VerCros = rand.Next(0, 100);
+                    if (VerCros < Cr)
+                    {
+                        int indexOsob = rand.Next(0, p);
+                        if (indexOsob == i)
+                        {
+                            indexOsob = rand.Next(0, p);
+                        }
+                        for (int j = 0; j < m; j++)
+                        {
+                            part[0, j] = Gen[i, j];
+                            part[2, j] = popyl[i, j];
+                            part[1, j] = Gen[indexOsob, j];
+                            part[3, j] = popyl[indexOsob, j];
+
+                        }
+                        Console.WriteLine("===========Crossover for OSOB {0} and OSOB {1}===========", i, indexOsob);
+                        itogCr = Crossover(part, m, Time, n, Mut, inte);
+                        Console.WriteLine("");
+                        Console.WriteLine("~~~~~~New Osob {0} for new pokolenie~~~~~~~~~~~", i);
+                        Console.WriteLine("");
+                        Console.Write("Gen: ");
+                        for (int j = 0; j < m; j++)
+                        {
+                            ItogCros[i + p, j] = itogCr[0, j];
+                            ProcPopyl[i + p, j] = itogCr[1, j];
+                            Console.Write(" {0} ", ItogCros[i, j]);
+                        }
+                        Console.WriteLine("");
+                        Console.Write("Prc: ");
+                        for (int j = 0; j < m; j++)
+                        {
+                            Console.Write("  {0}  ", ProcPopyl[i + p, j]);
+                        }
+                        Console.WriteLine();
+                    }
+                    Console.WriteLine("");
+
+                }
+                int[] itogosob = OtborPopylForNewPokolenie(ProcPopyl, n, m, p, Time,ItogCros);
+                for (int i = 0; i < p; i++)
+                {
+                    for (int j = 0; j < m; j++)
+                    {
+                        Gen[i, j] = ItogCros[itogosob[i], j];
+                        popyl[i, j] = ProcPopyl[itogosob[i], j];
+                    }
+                }
+                Console.WriteLine("");
+                Console.WriteLine("~~~~~~~~~~~~~Kol-vo povtorov {0}~~~~~~~~~~~~~~~~~~",povtor);
+                Console.WriteLine("");
+            }
+        }
+    }

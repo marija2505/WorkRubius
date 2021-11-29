@@ -1,0 +1,166 @@
+#include <icpdas.h>
+#include <stdio.h>
+int CheckSum=1,ret,rez1,rez2,i=0,rezultat,step=0; 
+unsigned char Out1[20]="#0400",DQ[16],DI[16],buf[20];
+unsigned int ot;
+long timer1=0;
+
+#define HydroReturn         DQ[0] //Гидроцилиндр возврата(обратный ход)
+#define HydroWorkStep       DQ[1] //Гидроцилиндр рабочий ход(прямой ход)
+#define Hydromotor          DQ[2] //Гидромотор
+
+#define Start               DI[0] //Кнопка Пуск 
+#define Stop                DI[1] //Кнопка стоп
+#define ContactMan          DI[2] //Контактный манометр
+
+void main(void)    
+{ 
+	InitLib();
+
+	//------------------
+	Show5DigitLed(1,16);
+	Show5DigitLed(2,16);
+	Show5DigitLed(3,16); //Выставление пробелов во все позиции на
+	Show5DigitLed(4,16); //контроллере
+	Show5DigitLed(5,16);
+	//------------------
+
+	Print("Take Pysk for start programm");
+	ret = InstallCom(2,115200,8,0,1); //подключение портов
+
+	while((!ReadInitPin()) && (ret!=0))//Если при подключении произошла ошибка, выводим на контроллере "Eror.(номер ошибки)"
+	{
+    	 Show5DigitLedSeg(1 , 0x04F); //"E"
+    	 Show5DigitLedSeg(2 , 0x05);  //"r"
+    	 Show5DigitLedSeg(3 , 0x01D); //"o"
+    	 Show5DigitLedSeg(4 , 0x085); //"r"
+    	 Show5DigitLed(5 , ret*(-1)); //(номер ошибки *(-1))
+    }
+	
+	while((!ReadInitPin()) && (ret==0)) //при успешном подключении
+	{
+
+	 	//----------Подключение к порту входа---------------------
+
+	 	memset(Out1,0,20); //зануляем строку(команда для подключения)
+	 	sprintf(Out1,"@%02X", 3); //Забиваем команду по шаблону,3-адрес порта входа
+    	SendCmdTo7000(2,Out1,CheckSum); //отправляем запрос
+    	ReceiveResponseFrom7000_ms(2,buf,150,CheckSum); //получение результата
+    	if (*buf =='>') //Если успешно
+    	{
+    	   	sscanf(&buf[3],"%02X",&ot);//считывания числа в шестнадцатеричной СИ
+        	for (i=0;i<16;i=i+1)
+    		{
+    			DI[i]=(ot>>i)&1;
+    		}	
+    	}
+        else //если не успешно, то выводим на контроллере "Eror"
+    	{
+    		while(!ReadInitPin())
+		{
+        	    Show5DigitLedSeg(1 , 0x04F); //"E"
+                Show5DigitLedSeg(2 , 0x05);  //"r"
+                Show5DigitLedSeg(3 , 0x01D); //"o"
+                Show5DigitLedSeg(4 , 0x085); //"r"
+    		}	
+    	}
+
+		//----------Подключение к порту выхода--------------------
+
+		memset(Out1,0,20);// зануляем строку(команда для подключения)
+		rezultat=0;
+        for(i=0;i<15;i=i+1)
+        {
+        	rezultat=rezultat|(DQ[i]<<i); //перевод числа из 16 в 2 СИ
+        }
+		Show5DigitLed(1,step);//выводим шаг на контроллере
+        sprintf(Out1,"#0400%02X",rezultat);  //заполняем команду по шаблону,04-адрес порта выхода
+        rez1 = SendCmdTo7000(2,Out1,CheckSum); //отправка запроса
+        rez2 = ReceiveResponseFrom7000_ms(2,buf,150,CheckSum);//получение результата
+        while((!ReadInitPin()) && (rez1!=0 || rez2!=0))  // Если при подключении произошла ошибка, выводим на контроллере "Eror.(номер ошибки)"
+    	{
+            Show5DigitLedSeg(1 , 0x04F); //"E"
+            Show5DigitLedSeg(2 , 0x05);  //"r"
+            Show5DigitLedSeg(3 , 0x01D); //"o"
+            Show5DigitLedSeg(4 , 0x085); //"r"
+        	Show5DigitLed(5 , min(rez1,rez2)*(-1)); //(номер ошибки *(-1))
+        	if(max(rez1,rez2)<0) Show5DigitLed(5 , max(rez1,rez2)*(-1)); //(номер ошибки *(-1))		
+        }
+		
+//------Алгоритм работы программы для автоматического гайковерта I110-------
+
+		if(Stop==0){step=0;}//Если нажата кнопка стоп, переходим на шаг 1
+
+    	switch(step)    //0-выключено, 1-включено
+    	{
+    		case 0: //шаг 0 
+    		{
+			HydroReturn =0; //Отключение гидроцилиндра возврата 
+ 			HydroWorkStep =0;//Отключение гидроцилиндра рабочего хода    
+			Hydromotor =0;  //Отключение гидромотора 
+			if(Start==1)
+			{
+    			 	step=step+1;
+				timer1=GetTimeTicks();
+			}
+    			break;
+    		}
+    		case 1: //шаг 1
+    		{
+    			if((GetTimeTicks()-timer1)>3000)
+    			{
+    				Hydromotor=1;   //Включение гидромотора
+    				step=step+1;
+					timer1=GetTimeTicks();	
+    			}
+    			break;
+    		}
+    		case 2: //шаг 2
+    		{
+    			if( ((GetTimeTicks()-timer1)>3000) && (ContactMan==0))
+    			{
+    				Hydromotor=0; //Отключение гидромоторa
+    				HydroWorkStep=1; //Включение гидроцилиндр рабочий ход
+    				step=step+1;
+				timer1=GetTimeTicks();
+			}
+    			break;
+    		}
+    		case 3: //шаг 3
+    		{
+    		 	if( ((GetTimeTicks()-timer1)>3000) && (ContactMan==0))
+    			{
+    				Hydromotor=1; //Включение гидромотора
+    				HydroWorkStep=0; //Отключение гидроцилиндр рабочий ход
+    				step=step+1; 
+				timer1=GetTimeTicks();
+    			}	
+    			break;
+    		}
+    		case 4: //шаг 4
+    		{
+    			if(((GetTimeTicks()-timer1)>3000) && (ContactMan==0))
+    			{    
+    				Hydromotor=0; //Отключение гидромоторa
+    				HydroReturn=1; //Включение гидроцилиндра возврата 
+    				step=step+1;
+				timer1=GetTimeTicks();	
+    			}
+    			break;
+    		}
+			case 5: //шаг 5
+    		{
+    			if((GetTimeTicks()-timer1>3000) && (ContactMan==0))
+    			{
+				HydroReturn=0; //Отключение гидроцилиндра возврата 
+    				Hydromotor=1; //Включение гидромотора
+    				step=2; //переход на шаг 2
+				timer1=GetTimeTicks();	
+    			}
+    			break;
+    		}		
+   		}	 	
+	}
+	rez1 = SendCmdTo7000(2,"#040000",CheckSum);
+	RestoreCom(2);
+}
